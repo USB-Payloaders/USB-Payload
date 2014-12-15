@@ -11,30 +11,23 @@
 using namespace std;
 
 
-void receive(int sock, int len, char* buf);
-void send(int sock, char* buffer);
+string receive(int sock, int len);
+void send(int sock, string buffer);
 
 int main()
 {
    struct sockaddr_in socketInfo;
    int socketHandle;
-   int portNumber = 10000;
-   char* buf;
+   int socketConnection;
+   int portNumber = 10003;
+
    bzero(&socketInfo, sizeof(sockaddr_in));  // Clear structure memory
 
-   if((socketHandle = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-   {
-      close(socketHandle);
-      exit(EXIT_FAILURE);
-   }
-
-   // Load system information into socket data structures
+   (socketHandle = socket(AF_INET, SOCK_STREAM, 0)
 
    socketInfo.sin_family = AF_INET;
    socketInfo.sin_addr.s_addr = htonl(INADDR_ANY); // Use any address available to the system
    socketInfo.sin_port = htons(portNumber);      // Set port number
-
-   // Bind the socket to a local socket address
 
    if( bind(socketHandle, (struct sockaddr *) &socketInfo, sizeof(socketInfo)) < 0)
    {
@@ -45,29 +38,36 @@ int main()
 
    listen(socketHandle, 1);
    cout << "Server is running!\n";
-   int socketConnection;
+
+
    if((socketConnection = accept(socketHandle, NULL, NULL)) < 0)
    {
       exit(EXIT_FAILURE);
    }
-   sleep(2);
-   receive(socketHandle, 1024, buf);
-   free(buf);
-   cout << buf;
+
+   string data = receive(socketConnection, 1024);
+   send(socketConnection, data);
+
    close(socketHandle);
+   close(socketConnection);
+
    return 0;
 }
 
-void receive(int sock, int len, char* buf)
+string receive(int sock, int len)
 {
-    int rc = 0;  // Actual number of bytes read
-    buf = (char*) malloc(len);
-   // rc is the number of characters returned.
-   // Note this is not typical. Typically one would only specify the number
-   // of bytes to read a fixed header which would include the number of bytes
-   // to read. See "Tips and Best Practices" below.
-
-   rc = recv(sock, buf, len, 0);
-   buf[rc]= (char) NULL;
+    int rc = 0;
+    char* buf = (char*) malloc(len);
+    string answer;
+    while (rc <= 0)
+     rc = recv(sock, buf, len, 0);
+    buf[rc]= (char) NULL;
+    answer = buf;
+    free(buf);
+    return answer;
 }
 
+void send(int sock, string buffer)
+{
+    send(sock, buffer.c_str(), buffer.length() , 0);
+}
