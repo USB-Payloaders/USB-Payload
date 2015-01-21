@@ -5,31 +5,45 @@ Main target of server - Fastest and most secure service, clean from errors and p
 
 Properties:
 
-1.Only for one client.
+1.Multi-user server.
 2.Will support SSL.
 3.Will use connection class.
 
 """
 
 import socket
-import time
 import logging
 import re
-import Connection
-
+import sqlite3
+import threading
+from Connection import Connection
+from PackageManager import PackageManager
 
 PATH = "config.txt"
+pm = None
+users_db = None
 
 
-def init(port):
+def init(port, packs_db, users_db_path):
+    global pm, users_db
+    pm = PackageManager(packs_db)
+    users_db = sqlite3.connect(users_db_path)
     listener = socket.socket()
-    listener.bind(("", port))
+    listener.bind(("", int(port)))
     listener.listen(1)
-    client = listener.accept()
-    listener.close()
+    while True:
+        client = listener.accept()
+        code, data = strip_message(client[0].recv(1024))
+        if code == "100":
+            user_id = login(data.split(",")[0], data.split(",")[1])
+            if user_id:
+                # logging.info("Client ")
+                threading.Thread(target=protocol, args=(Connection(client[0], client[1]),)).start()
+            else:
+                client[0].send("901\r\n")
+                client[0].close()
     # TODO: Add info logging.
-    return client[0]
-
+    listener.close()
 
 def readFromConfFile(path):
     try:
@@ -42,13 +56,37 @@ def readFromConfFile(path):
         return False
 
 
+def login(user, password):
+    cursor = users_db.cursor()
+    try:
+        user_id = cursor.execute("select user_id from users where user = ? and password == ?", (user, password, )).fetchone()
+    except:
+        return 1
+    return user_id
+    # Will add users db then change to zero in except.
+
+
 def protocol(client):
-    pass
+    global pm
+    client.send("101")
+    code, data = strip_message(client.recv(1024))
+    if code == "102":
+        package = pm.get_package(int(data))
+        client.send(package.get_info())
+    client.close()
+
+
+def strip_message(msg):
+    return msg[:3], msg[3:-2]
 
 
 def main():
-    # ToDo: logging.basicConfig(file = "log.log") - Add format string.
-    port = readFromConfFile(PATH)  # Here we can add more when we will need them, e.g. - workspace.
-    client = init(port)
-    protocol(client)
+    logger = logging.getLogger(__name__)
+    logger.setLevel(20)
+    logging.basicConfig(file="log.log", format='%(asctime)-15s %(clientip)s %(message)s')
+    port, packs_db, users_db_path = readFromConfFile(PATH)
+    init(port, packs_db, users_db_path)
 
+
+if __name__ == "__main__":
+    main()
