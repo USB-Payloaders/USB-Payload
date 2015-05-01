@@ -1,91 +1,47 @@
-__author__ = 'Yagel'
-
-"""
-Main target of server - Fastest and most secure service, clean from errors and problems and stable as much as possible.
-
-Properties:
-
-1.Multi-user server.
-2.Will support SSL.
-3.Will use connection class.
-
-"""
+__author__ = 'yagel'
 
 import socket
-import logging
-import re
-import sqlite3
-import threading
-from Connection import Connection
-from PackageManager import PackageManager
+from Creds import *
+from Misc import *
+from PackageManager import *
 
-PATH = "config.txt"
-pm = None
-users_db = None
+PORT = 4567
+funcs = {"100": login, "102": get_package_info, "104": send_package}
 
 
-def init(port, packs_db, users_db_path):
-    global pm, users_db
-    pm = PackageManager(packs_db)
-    users_db = sqlite3.connect(users_db_path)
+def init(port):
     listener = socket.socket()
-    listener.bind(("", int(port)))
-    listener.listen(1)
-    while True:
-        client = listener.accept()
-        code, data = strip_message(client[0].recv(1024))
-        if code == "100":
-            user_id = login(data.split(",")[0], data.split(",")[1])
-            if user_id:
-                # logging.info("Client ")
-                threading.Thread(target=protocol, args=(Connection(client[0], client[1]),)).start()
-            else:
-                client[0].send("901\r\n")
-                client[0].close()
-    # TODO: Add info logging.
+    listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    listener.bind(("", port))
+    listener.listen(5)
+    client = listener.accept()[0]
     listener.close()
-
-def readFromConfFile(path):
-    try:
-        handler = open(path, "rt")
-        data = handler.read()
-        handler.close()
-        configs = re.findall(".+= (.+)\n", data)
-        return configs
-    except:
-        return False
+    return client
 
 
-def login(user, password):
-    cursor = users_db.cursor()
-    try:
-        user_id = cursor.execute("select user_id from users where user = ? and password == ?", (user, password, )).fetchone()
-    except:
-        return 1
-    return user_id
-    # Will add users db then change to zero in except.
-
-
-def protocol(client):
-    global pm
-    client.send("101")
-    code, data = strip_message(client.recv(1024))
-    if code == "102":
-        package = pm.get_package(int(data))
-        client.send(package.get_info())
-    client.close()
-
-
-def strip_message(msg):
-    return msg[:3], msg[3:-2]
+def serve(client):
+    while True:
+        try:
+            code, data = strip_message(client.recv(1024))
+        except:
+            client.close()
+            print "Client disconnected."
+            client = init(PORT)
+            continue
+        try:
+            if check_request(code, data):
+                funcs[code](client, data)
+            else:
+                # TODO Rejection mc.
+                pass
+        except:
+            # TODO Rejection mc.
+            pass
 
 
 def main():
-    logger = logging.getLogger(__name__)
-    logger.setLevel(20)
-    logging.basicConfig(file="log.log", format='%(asctime)-15s %(clientip)s %(message)s')
-    port, packs_db, users_db_path = readFromConfFile(PATH)
-    init(port, packs_db, users_db_path)
+    client = init(PORT)
+    serve(client)
 
 
 if __name__ == "__main__":
