@@ -1,12 +1,14 @@
 __author__ = 'yagel'
 
 import socket
+
 from Creds import *
 from Misc import *
 from PackageManager import *
 
+
 PORT = 4567
-funcs = {"100": login, "102": get_package_info, "104": send_package}
+funcs = {"100": login, "102": get_package_info, "104": send_package}  # The new way to create servers.
 
 
 def init(port):
