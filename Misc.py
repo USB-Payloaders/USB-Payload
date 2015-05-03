@@ -13,5 +13,11 @@ def strip_message(data):
 
 
 def check_request(code, data):
-    return True
-    # TODO: Check Request.
+    if code == "100" and len(data) == 2:
+        return True
+    if code == "102" and len(data) == 1:
+        return True
+    if code == "104" and len(data) == 1:
+        return True
+    else:
+        return False

@@ -1,6 +1,7 @@
 __author__ = 'yagel'
 
 import sqlite3
+
 from Package import Package
 
 
@@ -39,7 +40,8 @@ def get_package_info(client, data):
     if not package:
         client.send("902\r\n")
     else:
-        client.send("103\r\n%s", package.get_info())
+        data = str(package.get_info())
+        client.send("103\r\n" + data + "\r\n")
 
 
 def send_package(client, data):

@@ -34,11 +34,9 @@ def serve(client):
             if check_request(code, data):
                 funcs[code](client, data)
             else:
-                # TODO Rejection mc.
-                pass
+                client.send("900\r\n")
         except:
-            # TODO Rejection mc.
-            pass
+            client.send("900\r\n")
 
 
 def main():
