@@ -17,6 +17,8 @@ def login(client, data):
         return 0
     if len(user_id) > 0 or (data[0] == "admin" and data[1] == "admin"):
         client.send("101")
-        return user_id
-    return 0
+        return True
+        # return user_id
+    return False
+    # return 0
 
