@@ -196,12 +196,14 @@ bool dwnPushPkg(SOCKET ConnectSocket, string pkgNm, PackageQue* que, Package* pa
 						//	to the stack as a string by this order: last is code incase we have it, first is the protocol message
 		string sendbuf = "104,";
 		string protocolCode; // the protocol code that the message holds
-		string pCode; // the code received from the message
+		string pCode = ""; // the code received from the message
 		sendbuf.append(pkgNm);
 		int packLen = 0;
-		char temp [DEFAULT_BUFLEN * 36];
-
-		bool iResult = send(sendbuf,ConnectSocket);
+		char temp [DEFAULT_BUFLEN * 48];
+		char recvBuf [DEFAULT_BUFLEN];
+		int fileSize = DEFAULT_BUFLEN *48;
+		int sizeCheck = 0;
+		int iResult = send(sendbuf,ConnectSocket);
 		string recvStr = receive(ConnectSocket);
 		splitting(recvStr, &s);
 
@@ -222,6 +224,8 @@ bool dwnPushPkg(SOCKET ConnectSocket, string pkgNm, PackageQue* que, Package* pa
 		{
 			packLen = atoi(s.front().c_str());
 			s.pop();
+			string sendbuf = "106,";
+			iResult = send(sendbuf,ConnectSocket);
 			if (packLen > 0)
 			{
 				//string recvStr = download(ConnectSocket);
@@ -235,14 +239,21 @@ bool dwnPushPkg(SOCKET ConnectSocket, string pkgNm, PackageQue* que, Package* pa
 				//b64String code(pCode);
 
 				//this is where we put the code into the pack and push in into the queue
-				int received = recv(ConnectSocket, temp, DEFAULT_BUFLEN * 36, 0);
-				cout << "File size received " << received << endl;
-				b64String code(temp); // This is the problematic part,
+				while(sizeCheck < fileSize)
+				{
+					int received = recv(ConnectSocket, recvBuf, DEFAULT_BUFLEN, 0);
+					pCode.append(recvBuf);
+					sizeCheck += received;
+					cout << "GOT " << received << endl;
+					// cout << "GOT " << recvBuf << endl;
+				}
+				//int received = recv(ConnectSocket, temp, DEFAULT_BUFLEN * 48, 0);
+				cout << "File size received " << sizeCheck << endl;
+				b64String code(pCode); // This is the problematic part,
 									//it says that we recived the entire file yet when we use the string it only has 3 chars
-				pack->setCode(code.decode());
+				pack->setCode(code);
 				pack->setName("defaultName");
 				que->insert(*pack);
-				cout << "THIS " << pack <<endl;
 				return true;
 			}
 			else
