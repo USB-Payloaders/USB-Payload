@@ -1,6 +1,7 @@
 __author__ = 'yagel'
 
 import sqlite3
+from base64 import b64encode
 
 from Package import Package
 
@@ -54,8 +55,11 @@ def send_package(client, data):
         print e
         return False
 
-    toSend = ("105," + str(len(data)))
+    toSend = ("105\r\n" + str(len(data)))
     client.send(toSend)
-    client.sendall(data)
-    # client.send("\r\n")
-
+    answer = client.recv(1024)
+    if "106" in answer:
+        data = b64encode(data)
+        client.sendall(data)
+    else:
+        client.send("903\r\n")
