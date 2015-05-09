@@ -35,7 +35,8 @@ def serve(client):
                 funcs[code](client, data)
             else:
                 client.send("900\r\n")
-        except:
+        except Exception, e:
+            print e
             client.send("900\r\n")
 
 

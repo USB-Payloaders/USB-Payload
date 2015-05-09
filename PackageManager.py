@@ -50,12 +50,11 @@ def send_package(client, data):
         package = pm.get_package(data[0])
         with open(package.get_path(), "rb") as r:
             data = r.read()
-            print len(data)
     except Exception, e:
         print e
         return False
 
-    toSend = ("105\r\n" + str(len(data)))
+    toSend = ("105," + str(len(data)))
     client.send(toSend)
     answer = client.recv(1024)
     if "106" in answer:

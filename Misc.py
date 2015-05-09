@@ -15,7 +15,7 @@ def strip_message(data):
 
 
 def check_request(code, data):
-    if code == "100" and len(data) == 2:
+    if code == "100" and len(data) == 3:
         return login(code, data)
     if code == "102" and len(data) == 1:
         return True
