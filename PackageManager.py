@@ -15,7 +15,7 @@ class PackageManager:
 
     def get_package(self, id):
         for package in self.packages:
-            if package.get_id() == id:
+            if package.get_id() == int(id):
                 return package
 
     def read_new_packages(self):
@@ -41,7 +41,7 @@ def get_package_info(client, data):
         client.send("902\r\n")
     else:
         data = str(package.get_info())
-        client.send("103\r\n" + data + "\r\n")
+        client.send("103," + data + "\r\n")
 
 
 def send_package(client, data):
@@ -49,9 +49,13 @@ def send_package(client, data):
         package = pm.get_package(data[0])
         with open(package.get_path(), "rb") as r:
             data = r.read()
-    except:
+            print len(data)
+    except Exception, e:
+        print e
         return False
-    client.send("105\r\n%s\r\n") % str(len(data))
+
+    toSend = ("105," + str(len(data)))
+    client.send(toSend)
     client.sendall(data)
-    client.send("\r\n")
+    # client.send("\r\n")
 

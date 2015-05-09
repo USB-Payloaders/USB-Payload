@@ -10,7 +10,6 @@
 #include <Windows.h>
 #include <ws2tcpip.h>
 #include <sstream>
-#include <stdio.h>
 #include "Package.h"
 #include "PackageQue.h"
 #include <vector>

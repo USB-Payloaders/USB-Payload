@@ -43,6 +43,7 @@ bool Package::dump_toFile()
 	{
 		std::ofstream exe;
 		exe.open(path, std::ios::binary);
+		std::cout << "The code " << this->encoded_code.decode() <<std::endl;
 		exe << this->encoded_code.decode();
 		exe.close();
 	}
